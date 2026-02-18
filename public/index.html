@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Чек-лист и трекер статусов</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #f4f6f8;
+      }
+
+      h2 {
+        margin-bottom: 10px;
+      }
+
+      button {
+        margin: 5px 5px 15px 0;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        max-width: 1000px;
+        background: #fff;
+      }
+
+      th,
+      td {
+        border: 1px solid #bbb;
+        padding: 8px;
+        text-align: center;
+      }
+
+      th {
+        background: #e9ecef;
+      }
+
+      .editable {
+        background: #fff8dc;
+      }
+
+      .editable:focus {
+        outline: 2px solid #4a90e2;
+        background: #fff;
+      }
+
+      .left-column {
+        text-align: left;
+        min-width: 180px;
+      }
+
+      .status {
+        font-weight: bold;
+        min-width: 120px;
+      }
+
+      .status.todo {
+        color: #999;
+      }
+      .status.progress {
+        color: #e67e22;
+      }
+      .status.done {
+        color: #27ae60;
+      }
+
+      input[type="checkbox"] {
+        transform: scale(1.2);
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Чек-лист / Отслеживание статусов</h2>
+
+    <button onclick="addRow()">➕ Добавить строку</button>
+    <button onclick="addColumn()">➕ Добавить колонку</button>
+    <button onclick="clearStorage()">🗑 Сбросить данные</button>
+
+    <table id="checklist">
+      <thead>
+        <tr>
+          <th class="editable" contenteditable="true">Задача</th>
+          <th class="editable" contenteditable="true">Этап 1</th>
+          <th class="editable" contenteditable="true">Этап 2</th>
+          <th class="editable" contenteditable="true">Этап 3</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="editable left-column" contenteditable="true">Задача 1</td>
+          <td><input type="checkbox" /></td>
+          <td><input type="checkbox" /></td>
+          <td><input type="checkbox" /></td>
+          <td class="status todo">Не начато</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <script>
+      const table = document.getElementById("checklist");
+
+      /* ===== Загрузка ===== */
+      async function loadData() {
+        const res = await fetch("/api/data");
+        const data = await res.json();
+
+        if (data.table) {
+          table.innerHTML = data.table;
+          [...table.tBodies[0].rows].forEach(updateStatus);
+        }
+      }
+
+      /* ===== Сохранение ===== */
+      async function saveData() {
+        await fetch("/api/data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ table: table.innerHTML }),
+        });
+      }
+
+      /* ===== Статусы ===== */
+      function updateStatus(row) {
+        const boxes = row.querySelectorAll('input[type="checkbox"]');
+        const status = row.querySelector(".status");
+        const checked = [...boxes].filter((b) => b.checked).length;
+
+        status.className = "status";
+
+        if (checked === 0) {
+          status.textContent = "Не начато";
+          status.classList.add("todo");
+        } else if (checked === boxes.length) {
+          status.textContent = "Завершено";
+          status.classList.add("done");
+        } else {
+          status.textContent = "В работе";
+          status.classList.add("progress");
+        }
+      }
+
+      /* ===== События ===== */
+      table.addEventListener("change", (e) => {
+        if (e.target.type === "checkbox") {
+          updateStatus(e.target.closest("tr"));
+          saveData();
+        }
+      });
+
+      table.addEventListener("input", saveData);
+
+      loadData();
+    </script>
+  </body>
+</html>

@@ -151,6 +151,43 @@
         }
       });
 
+      /* ===== Добавление строки ===== */
+      function addRow() {
+        const colCount = table.tHead.rows[0].cells.length;
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+        <td class="editable left-column" contenteditable="true">Новая задача</td>
+        ${'<td><input type="checkbox"></td>'.repeat(colCount - 2)}
+        <td class="status todo">Не начато</td>
+    `;
+
+        table.tBodies[0].appendChild(row);
+        saveData();
+      }
+
+      /* ===== Добавление колонки ===== */
+      function addColumn() {
+        const th = document.createElement("th");
+        th.className = "editable";
+        th.contentEditable = "true";
+        th.textContent = "Новый этап";
+
+        table.tHead.rows[0].insertBefore(
+          th,
+          table.tHead.rows[0].lastElementChild
+        );
+
+        [...table.tBodies[0].rows].forEach((row) => {
+          const cell = document.createElement("td");
+          cell.innerHTML = '<input type="checkbox">';
+          row.insertBefore(cell, row.lastElementChild);
+          updateStatus(row);
+        });
+
+        saveData();
+      }
+
       table.addEventListener("input", saveData);
 
       loadData();

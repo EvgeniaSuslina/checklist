@@ -77,7 +77,6 @@
 
     <button onclick="addRow()">➕ Добавить строку</button>
     <button onclick="addColumn()">➕ Добавить колонку</button>
-    <button onclick="clearStorage()">🗑 Сбросить данные</button>
 
     <table id="checklist">
       <thead>
@@ -108,10 +107,20 @@
         const res = await fetch("/api/data");
         const data = await res.json();
 
-        if (data.table) {
-          table.innerHTML = data.table;
-          [...table.tBodies[0].rows].forEach(updateStatus);
+        if (!data.table) return;
+
+        const temp = document.createElement("div");
+        temp.innerHTML = data.table;
+
+        const newThead = temp.querySelector("thead");
+        const newTbody = temp.querySelector("tbody");
+
+        if (newThead && newTbody) {
+          table.replaceChild(newThead, table.tHead);
+          table.replaceChild(newTbody, table.tBodies[0]);
         }
+
+        [...table.tBodies[0].rows].forEach(updateStatus);
       }
 
       /* ===== Сохранение ===== */
